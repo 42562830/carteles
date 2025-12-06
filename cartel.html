@@ -643,17 +643,78 @@
             },
 
             download: function() {
-                const poster = document.getElementById('poster');
-                const originalTransform = poster.style.transform;
-                poster.style.transform = 'none';
-                html2canvas(poster, { scale: 2, useCORS: true }).then(canvas => {
-                    const a = document.createElement('a');
-                    a.download = 'CeramicaXP_2026.jpg';
-                    a.href = canvas.toDataURL('image/jpeg', 0.95);
-                    a.click();
-                    poster.style.transform = originalTransform;
-                });
+    // 1. Identificar el cartel original
+    const originalPoster = document.getElementById('poster');
+
+    // 2. Crear un contenedor temporal invisible (el "Estudio")
+    // Esto evita que el zoom de la pantalla afecte a la foto
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.top = '-9999px';
+    container.style.left = '-9999px';
+    container.style.width = '800px';  // Ancho real del diseño
+    container.style.height = '1131px'; // Alto real del diseño
+    container.style.overflow = 'hidden';
+    document.body.appendChild(container);
+
+    // 3. Clonar el cartel
+    const clone = originalPoster.cloneNode(true);
+    
+    // 4. Limpiar el clon (Quitar transformaciones que rompen la foto)
+    clone.style.transform = 'none';
+    clone.style.margin = '0';
+    clone.style.borderRadius = '0';
+    clone.style.boxShadow = 'none';
+    // Aseguramos que las variables CSS se copien si están en el estilo inline
+    clone.style.cssText += originalPoster.style.cssText; 
+    // Forzamos reseteo de transformaciones de nuevo por si acaso
+    clone.style.transform = 'scale(1)'; 
+    clone.style.width = '800px';
+    clone.style.height = '1131px';
+
+    // Añadir el clon al contenedor invisible
+    container.appendChild(clone);
+
+    // 5. Configuración específica para los Logos en el momento de la foto
+    // Esto asegura que se vean bien aunque html2canvas sea caprichoso
+    const cloneLogos = clone.querySelectorAll('.logo-wrapper');
+    cloneLogos.forEach(wrapper => {
+        // Forzamos el filtro directamente en el momento de la captura
+        // para asegurar el color (blanco/negro)
+        const currentFilter = getComputedStyle(document.querySelector('.logo-wrapper')).filter;
+        wrapper.style.filter = currentFilter;
+    });
+
+    // 6. Generar la imagen desde el CLON, no desde la pantalla
+    setTimeout(() => {
+        html2canvas(clone, {
+            scale: 2, // Calidad alta (Retina)
+            useCORS: true,
+            backgroundColor: null, // Respetar transparencia o fondo
+            logging: false,
+            width: 800,
+            height: 1131,
+            windowWidth: 800,
+            windowHeight: 1131,
+            onclone: (clonedDoc) => {
+                // Truco extra: a veces las fuentes tardan en "asentarse" en el clon
+                // Forzamos un pequeño repintado si fuera necesario (aquí no suele hacer falta)
             }
+        }).then(canvas => {
+            // 7. Descargar
+            const link = document.createElement('a');
+            link.download = 'CeramicaXP_Cartel.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 0.90);
+            link.click();
+
+            // 8. Limpieza: Borrar el contenedor temporal
+            document.body.removeChild(container);
+        }).catch(err => {
+            console.error("Error al generar imagen:", err);
+            document.body.removeChild(container);
+        });
+    }, 100); // Pequeña pausa para asegurar que el clon se renderizó en el DOM
+}
         };
 
         window.onload = () => System.init();
