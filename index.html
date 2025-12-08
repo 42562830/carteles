@@ -51,15 +51,16 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.6);
         }
         
+        /* Modificamos un poco la transición para que se sienta más "tech" */
         .hud-message.active { opacity: 1; transform: scale(1) translateY(0); }
         
         .hud-title {
-            font-size: 36px; font-weight: 800; color: #fff; margin-bottom: 8px;
-            text-transform: uppercase; letter-spacing: -0.03em; line-height: 0.9;
+            font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 8px;
+            text-transform: uppercase; letter-spacing: -0.03em; line-height: 0.95;
         }
         .hud-sub {
-            font-family: var(--font-tech); color: var(--accent); font-size: 13px;
-            font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em;
+            font-family: var(--font-tech); color: var(--accent); font-size: 12px;
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em;
         }
 
         /* --- PANTALLA DE CARGA / INTRO --- */
@@ -74,7 +75,6 @@
         .intro-content { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px;}
         .intro-title { font-size: 60px; font-weight: 900; color: #fff; line-height: 0.9; letter-spacing: -0.04em; }
         
-        /* Botón de inicio necesario para activar AudioContext */
         .start-btn {
             margin-top: 30px;
             background: var(--accent); color: white;
@@ -279,7 +279,7 @@
 </head>
 <body>
 
-    <!-- AUDIO MASTER (TU FICHERO) -->
+    <!-- AUDIO MASTER -->
     <audio id="masterAudio" src="audio/demo_full.mp3" preload="auto"></audio>
     
     <!-- LOADING / INTRO -->
@@ -317,7 +317,6 @@
 
     <!-- MENSAJES FLOTANTES (HUD) -->
     <div class="hud-overlay">
-        <!-- Los mensajes se llenan dinámicamente -->
         <div class="hud-message" id="hudBox">
             <div class="hud-title" id="hudTitle"></div>
             <div class="hud-sub" id="hudSub"></div>
@@ -451,119 +450,137 @@
             }
         };
 
-        // --- GESTOR DEL TOUR (AUDIO SINCRONIZADO) ---
-        const Tour = {
-            cursor: document.getElementById('cursor'),
-            audio: document.getElementById('masterAudio'),
+        // --- GESTOR DEL TOUR (Sincronización ajustada) ---
+const Tour = {
+    cursor: document.getElementById('cursor'),
+    audio: document.getElementById('masterAudio'),
 
-            start: function() {
-                document.querySelector('.intro-layer').classList.add('hide');
-                System.init();
-                this.audio.play(); // Iniciar Audio Maestro
-                this.runTimeline();
-            },
+    start: function() {
+        document.querySelector('.intro-layer').classList.add('hide');
+        System.init();
+        this.audio.currentTime = 0; // Asegurar inicio desde cero
+        this.audio.play(); 
+        this.runTimeline();
+    },
 
-            // TIMELINE EN MILISEGUNDOS (Basado en tu fichero de audio)
-            runTimeline: function() {
-                this.cursor.style.display = 'block';
+    runTimeline: function() {
+        this.cursor.style.display = 'block';
 
-                // 00:05.5 - Mover a REMIX
+        // 00:00.2 - INTRO
+        setTimeout(() => this.showHUD('BIENVENIDO', 'GENERADOR CX26'), 200);
+
+        // 00:04.0 - SISTEMA ACTIVO (Adelantado ligeramente para dar paso a Remix)
+        setTimeout(() => this.showHUD('SISTEMA ACTIVO', 'INICIANDO MOTORES...'), 4000);
+
+        // --- BLOQUE 1: REMEZCLA (00:06.5) ---
+        // Iniciamos movimiento antes (5.8s) para llegar justo al golpe de voz (6.5s)
+        setTimeout(() => {
+            this.moveCursorTo('btn-remix', () => {
+                 this.showHUD('REMEZCLA', 'GENERACIÓN INFINITA');
+                 this.clickAction('btn-remix', () => System.generate());
+            });
+        }, 5800);
+
+        // --- BLOQUE 2: ESTRUCTURA (00:10.5) ---
+        // Movimiento inicia al 9.8s para clic al 10.5s
+        setTimeout(() => {
+            this.moveCursorTo('btn-layout', () => {
+                this.showHUD('ESTRUCTURA', 'ARQUITECTURA VISUAL');
+                this.clickAction('btn-layout', () => System.nextLayout());
+            });
+        }, 9800);
+
+        // --- BLOQUE 3: COLOR (00:14.5) ---
+        // Movimiento inicia al 13.8s para clic al 14.5s
+        setTimeout(() => {
+            this.moveCursorTo('btn-color', () => {
+                this.showHUD('COLOR', 'PALETAS INTELIGENTES');
+                this.clickAction('btn-color', () => System.nextColor());
+            });
+        }, 13800);
+
+        // --- BLOQUE 4: GUARDA (00:17.8) - CORRECCIÓN DE RETRASO ---
+        // ANTES: 18000ms (llegaba tarde).
+        // AHORA: 17200ms inicia movimiento -> Clic ocurre aprox 17.9s (Sincro perfecta)
+        setTimeout(() => {
+            this.moveCursorTo('btn-like', () => {
+                this.showHUD('GUARDA', 'COLECCIÓN PERSONAL');
+                this.clickAction('btn-like', () => {
+                    document.getElementById('btn-like').classList.add('liked');
+                    document.getElementById('favCount').classList.add('visible');
+                });
+                
+                // Movimiento hacia la galería mientras dice "Crea tu propia colección..."
                 setTimeout(() => {
-                    this.moveCursorTo('btn-remix', () => {
-                         // 00:06.5 - Click REMEZCLA
-                         this.showHUD('Remezcla', 'Generación infinita de diseños');
-                         this.clickAction('btn-remix', () => System.generate());
-                    });
-                }, 5500);
-
-                // 00:09.5 - Mover a LAYOUT
-                setTimeout(() => {
-                    this.moveCursorTo('btn-layout', () => {
-                        // 00:10.5 - Click ESTRUCTURA
-                        this.showHUD('Estructura', 'Cambia la arquitectura visual');
-                        this.clickAction('btn-layout', () => System.nextLayout());
-                    });
-                }, 9500);
-
-                // 00:13.5 - Mover a COLOR
-                setTimeout(() => {
-                    this.moveCursorTo('btn-color', () => {
-                        // 00:14.5 - Click COLOR
-                        this.showHUD('Color', 'Paletas cromáticas inteligentes');
-                        this.clickAction('btn-color', () => System.nextColor());
-                    });
-                }, 13500);
-
-                // 00:17.5 - Mover a LIKE
-                setTimeout(() => {
-                    this.moveCursorTo('btn-like', () => {
-                        // 00:18.2 - Click GUARDA
-                        this.showHUD('Guarda', 'Crea tu propia colección');
-                        this.clickAction('btn-like', () => {
-                            document.getElementById('btn-like').classList.add('liked');
-                            document.getElementById('favCount').classList.add('visible');
+                    this.moveCursorTo('galleryBtn', () => {
+                        this.clickAction('galleryBtn', () => {
+                            document.getElementById('favModal').classList.add('open');
                         });
-                        
-                        // 00:19.5 - Mover a GALERIA
-                        setTimeout(() => {
-                            this.moveCursorTo('galleryBtn', () => {
-                                this.clickAction('galleryBtn', () => {
-                                    document.getElementById('favModal').classList.add('open');
-                                });
-                            });
-                        }, 1300);
                     });
-                }, 17500);
+                }, 1200); // Reducido el tiempo de espera entre like y gallery
+            });
+        }, 17200);
 
-                // 00:22 - FIN (Listo)
-                setTimeout(() => {
-                    this.showHUD('Sistema Listo', 'Es tu turno');
-                }, 22000);
+        // 00:22.0 - CIERRE
+        setTimeout(() => {
+            this.showHUD('SISTEMA LISTO', 'AHORA ES TU TURNO');
+        }, 22000);
 
-                // 00:24.5 - Redirect
-                setTimeout(() => this.end(), 24500);
-            },
+        // 00:25.0 - SALIDA
+        setTimeout(() => this.end(), 25000);
+    },
 
-            // UTILIDADES
-            showHUD: function(title, sub) {
-                const box = document.getElementById('hudBox');
-                document.getElementById('hudTitle').innerText = title;
-                document.getElementById('hudSub').innerText = sub;
-                box.classList.add('active');
-                setTimeout(() => box.classList.remove('active'), 3000);
-            },
+    // --- UTILIDADES ---
+    showHUD: function(title, sub) {
+        const box = document.getElementById('hudBox');
+        box.classList.remove('active');
+        void box.offsetWidth; // Force Reflow para reiniciar animación si es necesario
 
-            moveCursorTo: function(targetId, callback) {
-                const target = document.getElementById(targetId);
-                const rect = target.getBoundingClientRect();
-                const rx = (Math.random() - 0.5) * 5; 
-                const ry = (Math.random() - 0.5) * 5;
-                
-                this.cursor.style.top = (rect.top + rect.height/2 + ry) + 'px';
-                this.cursor.style.left = (rect.left + rect.width/2 + rx) + 'px';
-                
-                setTimeout(() => { if(callback) callback(); }, 700);
-            },
-
-            clickAction: function(targetId, actionFunc) {
-                const el = document.getElementById(targetId);
-                this.cursor.classList.add('click');
-                el.classList.add('active-sim');
-                
-                if(actionFunc) actionFunc();
-
-                setTimeout(() => {
-                    this.cursor.classList.remove('click');
-                    el.classList.remove('active-sim');
-                }, 200);
-            },
-
-            end: function() {
-                document.body.style.opacity = '0';
-                document.body.style.transition = 'opacity 1s';
-                setTimeout(() => { window.location.href = 'cartel.html'; }, 1000);
+        document.getElementById('hudTitle').innerText = title;
+        document.getElementById('hudSub').innerText = sub;
+        
+        box.classList.add('active');
+        
+        setTimeout(() => {
+            if(document.getElementById('hudTitle').innerText === title) {
+                box.classList.remove('active');
             }
-        };
+        }, 3000);
+    },
+
+    moveCursorTo: function(targetId, callback) {
+        const target = document.getElementById(targetId);
+        const rect = target.getBoundingClientRect();
+        // Un poco de aleatoriedad para que parezca humano
+        const rx = (Math.random() - 0.5) * 10; 
+        const ry = (Math.random() - 0.5) * 10;
+        
+        this.cursor.style.top = (rect.top + rect.height/2 + ry) + 'px';
+        this.cursor.style.left = (rect.left + rect.width/2 + rx) + 'px';
+        
+        // El cursor tarda unos 600-700ms en llegar por CSS, ejecutamos callback al llegar
+        setTimeout(() => { if(callback) callback(); }, 700);
+    },
+
+    clickAction: function(targetId, actionFunc) {
+        const el = document.getElementById(targetId);
+        this.cursor.classList.add('click');
+        el.classList.add('active-sim');
+        
+        if(actionFunc) actionFunc();
+
+        setTimeout(() => {
+            this.cursor.classList.remove('click');
+            el.classList.remove('active-sim');
+        }, 200);
+    },
+
+    end: function() {
+        document.body.style.opacity = '0';
+        document.body.style.transition = 'opacity 1s';
+        setTimeout(() => { window.location.href = 'cartel5.html'; }, 1000);
+    }
+};;
 
     </script>
 </body>
