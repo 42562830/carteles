@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>CERAMICA XP 26 | Vector PDF Ready</title>
+    <title>CERAMICA XP 26 | Pro System v3</title>
     
-    <!-- LIBRERÍAS: Ya no necesitamos librerías externas complejas para esto -->
-    <!-- Usaremos el motor nativo del navegador -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script> <!-- Solo por si quieres JPG también -->
+    <!-- LIBRERÍAS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <!-- FUENTES -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +15,9 @@
 
     <style>
         :root {
+            /* Variables dinámicas */
             --w: 800px; --h: 1131px;
+            
             --bg: #F4F4F4; --fg: #111111; --accent: #E83234; 
             --line: rgba(0,0,0,0.1);
             --logo-filter: grayscale(100%) brightness(0); 
@@ -32,7 +33,7 @@
             overflow: hidden; display: flex; flex-direction: column; 
         }
 
-        /* --- ESTILOS DE PANTALLA --- */
+        /* --- STAGE --- */
         .stage-container {
             flex: 1; width: 100%; position: relative;
             display: flex; align-items: center; justify-content: center;
@@ -40,6 +41,7 @@
             background-image: radial-gradient(#222 1px, transparent 1px);
             background-size: 20px 20px;
             padding: 20px; 
+            transition: all 0.3s ease;
         }
 
         #poster {
@@ -49,57 +51,29 @@
             position: relative; overflow: hidden;
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
             transform-origin: center center; will-change: transform; flex-shrink: 0; 
-            /* Asegura que los colores de fondo se impriman */
+            transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.3s;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
 
-        /* --- ESTILOS DE IMPRESIÓN / PDF (LA CLAVE) --- */
+        /* --- IMPRESIÓN --- */
         @media print {
-            /* Ocultar todo lo que no sea el cartel */
-            body * {
-                visibility: hidden;
-            }
-            
-            /* Ajustes de la página PDF */
-            @page {
-                size: 800px 1131px; /* Tamaño exacto del diseño */
-                margin: 0;
-            }
-
-            body {
-                margin: 0; padding: 0; background: none; overflow: visible; height: auto;
-            }
-
-            .stage-container {
-                display: block; padding: 0; margin: 0; background: none; overflow: visible;
-                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            }
-
-            #poster, #poster * {
-                visibility: visible; /* Hacer visible solo el cartel */
-            }
-
+            body * { visibility: hidden; }
+            body { margin: 0; padding: 0; background: none; overflow: visible; height: auto; }
+            .stage-container { display: block; padding: 0; margin: 0; background: none; overflow: visible; position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+            #poster, #poster * { visibility: visible; }
             #poster {
-                position: absolute;
-                top: 0; left: 0;
-                transform: scale(1) !important; /* Quitar el zoom de pantalla */
-                margin: 0 !important;
-                box-shadow: none !important;
-                border: none !important;
-                /* Forzar impresión de fondos y colores */
+                position: absolute; top: 0; left: 0;
+                transform: scale(1) !important; margin: 0 !important;
+                box-shadow: none !important; border: none !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 background-color: var(--bg) !important;
             }
-            
-            /* Asegurar que las líneas finas se vean */
-            .grid-line {
-                border-color: var(--line) !important;
-            }
+            .grid-line { border-color: var(--line) !important; }
         }
 
-        /* --- RESTO DE ESTILOS (UI) --- */
+        /* --- UI COMPONENTES --- */
         .gallery-btn {
             position: absolute; top: 20px; right: 20px;
             width: 44px; height: 44px;
@@ -123,32 +97,48 @@
         }
         .badge.visible { opacity: 1; }
 
+        /* --- CONTROLES SCROLLABLE (SOLUCIÓN MÓVIL) --- */
         .controls-area {
-            width: 100%; 
-            background: var(--ui-bg); 
-            border-top: 1px solid var(--ui-border);
-            padding: 12px 10px; 
+            width: 100%; background: var(--ui-bg); border-top: 1px solid var(--ui-border);
+            padding: 12px 0; /* Padding horizontal quitado para el scroll */
             padding-bottom: calc(12px + env(safe-area-inset-bottom)); 
-            z-index: 1000; 
-            display: flex; 
-            justify-content: center; 
-            flex-shrink: 0; 
+            z-index: 1000; display: flex; justify-content: center; flex-shrink: 0; 
         }
-        .controls-grid { display: flex; gap: 8px; width: 100%; max-width: 600px; }
+        
+        .controls-scroll-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            display: flex;
+            justify-content: center; /* Centrado en desktop */
+            padding: 0 15px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+        }
+        .controls-scroll-wrapper::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+        .controls-grid { 
+            display: flex; gap: 8px; 
+            min-width: min-content; /* Asegura que no se aplasten */
+        }
 
         .btn {
-            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--ui-border);
+            background: rgba(255,255,255,0.05); border: 1px solid var(--ui-border);
             color: #fff; height: 50px; border-radius: 8px;
             font-family: var(--font-main); font-size: 9px; font-weight: 700;
             text-transform: uppercase; letter-spacing: 0.5px;
             cursor: pointer; display: flex; flex-direction: column;
             align-items: center; justify-content: center; transition: background 0.2s;
+            white-space: nowrap; /* Evitar rotura de texto */
+            min-width: 70px; /* Ancho mínimo para toque */
+            padding: 0 15px;
         }
         .btn:active { background: rgba(255,255,255,0.2); transform: scale(0.98); }
         .btn svg { width: 18px; height: 18px; fill: currentColor; margin-bottom: 4px; }
         .btn.primary { background: var(--accent); border-color: var(--accent); }
         .btn.liked svg { fill: var(--accent); }
         .btn.liked { border-color: var(--accent); background: rgba(232, 50, 52, 0.1); }
+        /* Texto dinámico del botón format */
+        #btnFormatText { margin-top: 2px; }
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -157,76 +147,89 @@
             backdrop-filter: blur(5px);
         }
         .modal-overlay.open { display: flex; }
-        
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            color: #fff; font-family: var(--font-main); margin-bottom: 20px;
-        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; color: #fff; font-family: var(--font-main); margin-bottom: 20px; }
         .modal-title { font-size: 20px; font-weight: 700; text-transform: uppercase; }
         .close-btn { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 10px;}
-
-        .favorites-list {
-            flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
-        }
-        .fav-item {
-            background: #1a1a1a; border: 1px solid #333;
-            padding: 15px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: space-between;
-            cursor: pointer; transition: background 0.2s;
-        }
+        .favorites-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .fav-item { background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.2s; }
         .fav-item:active { background: #333; }
         .fav-info { display: flex; flex-direction: column; gap: 4px; }
         .fav-name { color: #fff; font-family: var(--font-main); font-weight: 700; font-size: 14px; text-transform: uppercase;}
         .fav-date { color: #666; font-family: var(--font-tech); font-size: 10px; }
-        .fav-delete {
-            background: rgba(255,255,255,0.1); border: none; color: #fff;
-            width: 30px; height: 30px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin-left: 10px; cursor: pointer;
-        }
+        .fav-delete { background: rgba(255,255,255,0.1); border: none; color: #fff; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-left: 10px; cursor: pointer; }
         .fav-delete:hover { background: var(--accent); }
 
         @media (min-width: 800px) {
             .controls-area {
-                position: relative; 
-                bottom: auto; left: auto; transform: none;
+                position: relative; bottom: auto; left: auto; transform: none;
                 width: auto; margin: 0 auto; margin-bottom: 30px; margin-top: 10px; 
-                background: rgba(0,0,0,0.8); border-radius: 12px; padding: 12px 20px;
+                background: rgba(0,0,0,0.8); border-radius: 12px; padding: 12px 0;
                 border: 1px solid rgba(255,255,255,0.1);
             }
-            .btn { flex-direction: row; gap: 8px; font-size: 12px; padding: 0 20px; }
+            .controls-scroll-wrapper { justify-content: center; }
+            .btn { flex-direction: row; gap: 8px; font-size: 12px; padding: 0 20px; min-width: auto; }
             .btn svg { margin-bottom: 0; }
             .modal-overlay { align-items: center; padding-top: 50px; }
             .favorites-list { width: 100%; max-width: 500px; }
             .modal-header { width: 100%; max-width: 500px; }
         }
 
-        /* --- CONTENIDO DEL CARTEL (GRID, LAYERS) --- */
+        /* --- CARTEL: ELEMENTOS INTERNOS --- */
         .grid-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(12, 1fr); z-index: 10; pointer-events: none; }
         .grid-line { position: absolute; background: var(--line); }
         .line-v { width: 1px; height: 100%; top: 0; }
         .line-h { width: 100%; height: 1px; left: 0; }
-        .grid-dot { position: absolute; width: 6px; height: 6px; background: var(--bg); border: 1.5px solid var(--accent); border-radius: 50%; transform: translate(-50%, -50%); z-index: 15; }
+        .grid-dot { position: absolute; width: 6px; height: 6px; background: var(--bg); border: 1.5px solid var(--accent); border-radius: 50%; transform: translate(-50%, -50%); z-index: 15; aspect-ratio: 1/1; }
 
         .graphic-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; overflow: hidden; }
-        .super-year-bg { font-family: var(--font-main); font-weight: 800; position: absolute; line-height: 0.8; color: transparent; -webkit-text-stroke: 1.5px var(--line); white-space: nowrap; opacity: 0.6; transform-origin: center; }
+        .super-year-bg { font-family: var(--font-main); font-weight: 800; position: absolute; line-height: 0.8; color: transparent; -webkit-text-stroke: 1.5px var(--line); white-space: nowrap; opacity: 0.6; transform-origin: center; pointer-events: none;}
+        
         .content-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(12, 1fr); padding: 40px; padding-bottom: 90px; }
+        
         .brand-logo { grid-column: 1 / span 12; height: 40px; display: flex; align-items: center; }
         .brand-logo img { height: 100%; width: auto; }
+        
         .main-title-box { display: flex; flex-direction: column; justify-content: center; overflow: hidden; padding: 0; max-width: 100%; }
         .fit-text { font-family: var(--font-main); font-weight: 800; text-transform: uppercase; line-height: 0.85; letter-spacing: -0.03em; margin: 0; white-space: pre-wrap; word-break: normal; overflow-wrap: normal; display: block; width: 100%; }
+        
         .subtitle { font-family: var(--font-tech); font-size: 18px; margin-top: 25px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; border-top: 1px solid currentColor; padding-top: 10px; display: inline-block; width: fit-content; }
+        
         .data-block { font-family: var(--font-tech); display: flex; flex-direction: column; justify-content: flex-end; border-top: 2px solid var(--accent); padding-top: 15px; }
         .data-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; font-size: 16px; font-weight: 500; text-transform: uppercase; }
         .data-big { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; font-family: var(--font-main); display: block; }
         .year-pill { background: var(--fg); color: var(--pill-text); padding: 2px 8px; border-radius: 8px; font-size: 0.6em; vertical-align: middle; margin-left: 8px; font-weight: 700; }
-        .footer-logos { position: absolute; bottom: 40px; left: 40px; right: 40px; height: 20px; display: flex; flex-direction: row; justify-content: space-between; align-items: center; z-index: 30; gap: 15px; }
+        
+        /* FOOTER LOGOS - ESTILO BASE */
+        .footer-logos { 
+            position: absolute; bottom: 40px; left: 40px; right: 40px; height: 20px; 
+            display: flex; flex-direction: row; justify-content: space-between; align-items: center; 
+            z-index: 30; gap: 15px; 
+        }
         .logo-wrapper { flex: 0 0 auto; display: flex; justify-content: center; align-items: center; height: 100%; }
         .footer-logos img { height: 100%; width: auto; max-width: 110px; object-fit: contain; filter: var(--logo-filter); opacity: 0.85; transition: filter 0.3s; }
         .logo-ascale img { height: auto !important; width: auto; max-width: 90px !important; max-height: 100%; }
         .noise { display: none; }
 
-        /* LAYOUTS */
+        /* --- LOGO FIXES FOR EXTREME FORMATS --- */
+
+        /* STORY (9:16) - RETÍCULA 4x2 COMPACTA */
+        .format-story .footer-logos {
+            bottom: 30px; left: 30px; right: 30px; height: auto;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+            justify-items: center;
+        }
+        .format-story .logo-wrapper { height: 25px; width: 100%; }
+        .format-story .logo-wrapper img { max-height: 100%; max-width: 100%; }
+        
+        /* BANNER (16:9) - FILA ÚNICA ALINEADA A LA DERECHA */
+        .format-landscape .footer-logos {
+            width: auto; left: auto; right: 40px; bottom: 40px;
+            display: flex; gap: 25px; height: 25px;
+            justify-content: flex-end;
+        }
+        .format-landscape .logo-wrapper img { max-height: 100%; width: auto; }
+
+        /* --- LAYOUTS (BASE: PORTRAIT/SQUARE) --- */
         .l-swiss .brand-logo { grid-column: 1; grid-row: 1; }
         .l-swiss .main-title-box { grid-column: 1 / span 12; grid-row: 3 / span 6; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 20px 0; }
         .l-swiss .data-block { grid-column: 1 / span 6; grid-row: 10 / span 2; } 
@@ -278,6 +281,44 @@
         .l-tech .data-big { font-size: 42px; }
         .l-tech .super-year-bg { font-size: 120px; bottom: 120px; left: 20px; opacity: 1; color: transparent; -webkit-text-stroke: 1px var(--accent); font-weight: 600; letter-spacing: -0.05em; opacity: 0.3; }
         .l-tech #mainTitle { color: var(--fg); }
+
+        /* --- SMART LANDSCAPE (BANNER) ADAPTATION --- */
+        /* Split Screen: Titulo izquierda (Columnas 1-6) | Datos y Logos derecha (Columnas 7-12) */
+        
+        .format-landscape.l-swiss .main-title-box { grid-column: 1 / span 6; grid-row: 2 / span 10; border-right: 1px solid var(--line); border-bottom: none; border-top: none; padding-right: 30px;}
+        .format-landscape.l-swiss .data-block { grid-column: 7 / span 6; grid-row: 8 / span 3; justify-content: flex-end; text-align: right; padding-right: 0;}
+        .format-landscape.l-swiss .brand-logo { grid-column: 7 / span 6; grid-row: 2; justify-content: flex-end;}
+        
+        .format-landscape.l-mod .main-title-box { grid-column: 1 / span 6; grid-row: 1 / span 12; padding-top: 0; border-left: none; border-right: 1px solid var(--line); text-align: right; padding-right: 30px; justify-content: center; }
+        .format-landscape.l-mod .data-block { grid-column: 7 / span 6; grid-row: 8 / span 3; padding-left: 30px; }
+        .format-landscape.l-mod .brand-logo { grid-column: 7 / span 6; grid-row: 2; padding-left: 30px; }
+
+        .format-landscape.l-typo .main-title-box { grid-column: 2 / span 6; grid-row: 2 / span 8; text-align: left; align-items: flex-start; }
+        .format-landscape.l-typo .data-block { grid-column: 8 / span 4; grid-row: 8 / span 3; padding-bottom: 0; border-bottom: none; border-top: 4px solid var(--accent); padding-top: 15px; text-align: left;}
+        
+        .format-landscape.l-asym .main-title-box { grid-column: 1 / span 7; grid-row: 2 / span 10; justify-content: flex-start; }
+        .format-landscape.l-asym .data-block { grid-column: 8 / span 5; grid-row: 8 / span 3; }
+        .format-landscape.l-asym .brand-logo { grid-column: 8 / span 5; grid-row: 2; justify-content: flex-end;}
+
+        .format-landscape.l-bottom .main-title-box { grid-column: 1 / span 6; grid-row: 1 / span 12; border-top: none; border-right: 2px solid var(--fg); padding-right: 30px; align-items: flex-end; text-align: right;}
+        .format-landscape.l-bottom .data-block { grid-column: 7 / span 6; grid-row: 1 / span 12; border: none; align-items: flex-start; justify-content: center; padding-left: 30px; text-align: left;}
+        .format-landscape.l-bottom .data-row { justify-content: flex-start; }
+        .format-landscape.l-bottom .subtitle { text-align: right; margin-top: 10px;}
+
+        .format-landscape.l-side-l .main-title-box { grid-column: 5 / span 8; grid-row: 2 / span 10; }
+        .format-landscape.l-side-l .data-block { grid-column: 1 / span 4; grid-row: 2 / span 10; }
+        
+        .format-landscape.l-side-r .main-title-box { grid-column: 1 / span 7; grid-row: 1 / span 12; border-right: 1px solid var(--line); padding-right: 30px; }
+        .format-landscape.l-side-r .data-block { grid-column: 8 / span 4; grid-row: 5 / span 6; text-align: right;}
+        
+        .format-landscape.l-cross .main-title-box { grid-column: 1 / span 7; grid-row: 2 / span 10; border-left: none; border-right: 10px solid var(--accent); padding-right: 30px; padding-left: 0; text-align: right; align-items: flex-end;}
+        .format-landscape.l-cross .data-block { grid-column: 8 / span 5; grid-row: 8 / span 3; text-align: left; align-items: flex-start; border-top: 1px solid var(--fg); padding-top: 20px;}
+
+        .format-landscape.l-tech .main-title-box { grid-column: 2 / span 6; grid-row: 3 / span 8; }
+        .format-landscape.l-tech .data-block { grid-column: 8 / span 4; grid-row: 3 / span 8; padding-left: 0; border-left: 1px solid var(--accent); padding-left: 20px;}
+        .format-landscape.l-tech .brand-logo { grid-column: 8 / span 4; grid-row: 2; justify-content: flex-start; padding-left: 20px;}
+
+        .format-landscape .super-year-bg { font-size: 250px; }
 
     </style>
 </head>
@@ -331,35 +372,41 @@
         </div>
     </div>
 
-    <!-- CONTROLS -->
+    <!-- CONTROLS SCROLLABLE -->
     <div class="controls-area" id="controls">
-        <div class="controls-grid">
-            <button class="btn primary" onclick="System.generate()">
-                <svg viewBox="0 0 24 24"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"></path></svg>
-                Remix
-            </button>
-            <button class="btn" onclick="System.nextLayout()">
-                <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"></path></svg>
-                Layout
-            </button>
-            <button class="btn" onclick="System.nextColor()">
-                <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"></path></svg>
-                Color
-            </button>
-            <button class="btn" id="btnLike" onclick="System.toggleLike()">
-                <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                Like
-            </button>
-            <!-- BOTÓN GUARDAR VECTOR (PDF) -->
-            <button class="btn" onclick="System.printPDF()">
-                <svg viewBox="0 0 24 24"><path d="M19 8h-1V3H6v5H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm8 14H8v-4h8v4zm2-4v-2H6v2H4v-4c0-.55.45-1 1-1h14c.55 0 1 .45 1 1v4h-2z"/></svg>
-                PDF Vector
-            </button>
+        <div class="controls-scroll-wrapper">
+            <div class="controls-grid">
+                <button class="btn primary" onclick="System.generate()">
+                    <svg viewBox="0 0 24 24"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"></path></svg>
+                    Remix
+                </button>
+                <button class="btn" onclick="System.nextFormat()">
+                    <svg viewBox="0 0 24 24"><path d="M21 4H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H3V6h18v12zM5 16h4v-2H5v2zm0-4h4V8H5v4zm6 4h4v-2h-4v2zm0-4h4V8h-4v4zm6 4h4v-2h-4v2zm0-4h4V8h-4v4z"/></svg>
+                    <span id="btnFormatText">Format: A4</span>
+                </button>
+                <button class="btn" onclick="System.nextLayout()">
+                    <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"></path></svg>
+                    Layout
+                </button>
+                <button class="btn" onclick="System.nextColor()">
+                    <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"></path></svg>
+                    Color
+                </button>
+                <button class="btn" id="btnLike" onclick="System.toggleLike()">
+                    <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    Like
+                </button>
+                <button class="btn" onclick="System.printPDF()">
+                    <svg viewBox="0 0 24 24"><path d="M19 8h-1V3H6v5H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm8 14H8v-4h8v4zm2-4v-2H6v2H4v-4c0-.55.45-1 1-1h14c.55 0 1 .45 1 1v4h-2z"/></svg>
+                    PDF
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
         const System = {
+            // --- DATOS Y RECURSOS ---
             palettes: [
                 { bg: '#F4F4F4', fg: '#111111', accent: '#E83234', logo: 'negro', name: 'Original' },
                 { bg: '#111111', fg: '#FFFFFF', accent: '#E83234', logo: 'blanco', name: 'Dark Mode' },
@@ -396,7 +443,16 @@
             
             layouts: ['l-swiss', 'l-mod', 'l-typo', 'l-asym', 'l-bottom', 'l-side-l', 'l-side-r', 'l-cross', 'l-tech'],
             
-            state: { l: 0, p: 0, savedHTML: '' },
+            // --- NUEVO: DEFINICIÓN DE FORMATOS Y NOMBRES ---
+            formats: [
+                { w: 800, h: 1131, name: 'A4', class: '' },
+                { w: 636, h: 1131, name: 'Story', class: 'format-story' }, 
+                { w: 800, h: 800,  name: 'Post',   class: '' },
+                { w: 1131, h: 636, name: 'Banner', class: 'format-landscape' }
+            ],
+
+            // ESTADO
+            state: { l: 0, p: 0, f: 0, savedHTML: '' }, // f = format index
             favorites: [],
 
             init: function() {
@@ -409,9 +465,16 @@
             fitPoster: function() {
                 const poster = document.getElementById('poster');
                 const stage = document.getElementById('stage');
-                // IMPORTANTE: En modo impresión, este zoom se ignora gracias al @media print
-                const scale = Math.min((stage.clientWidth - 20) / 800, (stage.clientHeight - 20) / 1131);
-                poster.style.transform = `scale(${Math.min(scale, 1.5)})`;
+                const format = this.formats[this.state.f];
+                
+                // Calculamos escala basada en el contenedor y el formato actual
+                const scale = Math.min(
+                    (stage.clientWidth - 20) / format.w, 
+                    (stage.clientHeight - 20) / format.h
+                );
+                
+                // En modo impresión, el transform se anula por CSS, aquí solo afecta visualización en pantalla
+                poster.style.transform = `scale(${Math.min(scale, 1.2)})`;
             },
 
             resizeLoop: function() {
@@ -496,7 +559,7 @@
                 this.state.savedHTML = container.innerHTML;
             },
 
-            // --- SISTEMA DE CONTROL DE ESTADO ---
+            // --- CONTROL DE ESTADO ---
             
             generate: function() {
                 this.state.l = Math.floor(Math.random() * this.layouts.length);
@@ -519,16 +582,31 @@
                 this.resetLike(); 
             },
 
+            nextFormat: function() {
+                this.state.f = (this.state.f + 1) % this.formats.length;
+                this.render();
+            },
+
             render: function() {
                 const p = this.palettes[this.state.p];
                 const l = this.layouts[this.state.l];
+                const f = this.formats[this.state.f];
+                
                 const poster = document.getElementById('poster');
                 
-                poster.className = l;
+                // Actualizar Texto Botón Format
+                document.getElementById('btnFormatText').innerText = "Format: " + f.name;
+
+                // Aplicar Clases
+                poster.className = `${l} ${f.class}`;
+                
+                // Aplicar Variables
                 poster.style.setProperty('--bg', p.bg);
                 poster.style.setProperty('--fg', p.fg);
                 poster.style.setProperty('--accent', p.accent);
-                
+                poster.style.setProperty('--w', f.w + 'px');
+                poster.style.setProperty('--h', f.h + 'px');
+
                 const isLightText = (p.fg === '#FFFFFF' || p.fg === '#ebc4c6');
                 poster.style.setProperty('--pill-text', isLightText ? '#111111' : '#FFFFFF');
                 poster.style.setProperty('--line', isLightText ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)');
@@ -539,8 +617,20 @@
                 const footerFilter = p.logo === 'blanco' ? 'grayscale(100%) brightness(0) invert(1)' : 'grayscale(100%) brightness(0)';
                 poster.style.setProperty('--logo-filter', footerFilter);
 
-                this.fitText();
-                this.fitPoster(); 
+                this.updatePrintPageSize(f.w, f.h);
+                this.fitPoster();
+                
+                setTimeout(() => this.fitText(), 50);
+            },
+
+            updatePrintPageSize: function(w, h) {
+                let style = document.getElementById('dynamic-print-style');
+                if (!style) {
+                    style = document.createElement('style');
+                    style.id = 'dynamic-print-style';
+                    document.head.appendChild(style);
+                }
+                style.innerHTML = `@media print { @page { size: ${w}px ${h}px; margin: 0; } }`;
             },
 
             // --- FAVORITOS ---
@@ -549,12 +639,16 @@
                 const currentObj = {
                     l: this.state.l,
                     p: this.state.p,
+                    f: this.state.f,
                     html: this.state.savedHTML,
                     date: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
                 };
 
-                const existingIndex = this.favorites.findIndex(f => 
-                    f.l === currentObj.l && f.p === currentObj.p && f.html === currentObj.html
+                const existingIndex = this.favorites.findIndex(item => 
+                    item.l === currentObj.l && 
+                    item.p === currentObj.p && 
+                    item.f === currentObj.f &&
+                    item.html === currentObj.html
                 );
 
                 if (existingIndex > -1) {
@@ -578,11 +672,15 @@
             loadFavorite: function(index) {
                 const fav = this.favorites[index];
                 if(!fav) return;
+                
                 this.state.l = fav.l;
                 this.state.p = fav.p;
+                this.state.f = fav.f !== undefined ? fav.f : 0;
                 this.state.savedHTML = fav.html;
+                
                 document.getElementById('gridLines').innerHTML = fav.html;
                 this.render();
+                
                 document.getElementById('btnLike').classList.add('liked');
                 this.toggleGallery();
             },
@@ -595,8 +693,7 @@
             },
 
             toggleGallery: function() {
-                const modal = document.getElementById('favModal');
-                modal.classList.toggle('open');
+                document.getElementById('favModal').classList.toggle('open');
             },
 
             updateGalleryUI: function() {
@@ -613,13 +710,15 @@
 
                 this.favorites.forEach((fav, i) => {
                     const paletteName = this.palettes[fav.p] ? this.palettes[fav.p].name : 'Color ' + fav.p;
+                    const formatName = this.formats[fav.f] ? this.formats[fav.f].name : 'Poster';
+                    
                     const item = document.createElement('div');
                     item.className = 'fav-item';
                     item.onclick = () => this.loadFavorite(i);
                     item.innerHTML = `
                         <div class="fav-info">
-                            <span class="fav-name">Poster #${this.favorites.length - i}</span>
-                            <span class="fav-date">${paletteName} • ${fav.date}</span>
+                            <span class="fav-name">Diseño #${this.favorites.length - i}</span>
+                            <span class="fav-date">${formatName} • ${paletteName}</span>
                         </div>
                         <button class="fav-delete" onclick="System.deleteFavorite(event, ${i})">✕</button>
                     `;
@@ -628,11 +727,11 @@
             },
 
             saveFavoritesToDisk: function() {
-                localStorage.setItem('ceramicaXP_favs', JSON.stringify(this.favorites));
+                localStorage.setItem('ceramicaXP_favs_v3', JSON.stringify(this.favorites));
             },
 
             loadFavoritesFromDisk: function() {
-                const saved = localStorage.getItem('ceramicaXP_favs');
+                const saved = localStorage.getItem('ceramicaXP_favs_v3');
                 if (saved) {
                     try {
                         this.favorites = JSON.parse(saved);
@@ -644,18 +743,26 @@
             fitText: function() {
                 const box = document.getElementById('titleBox');
                 const text = document.getElementById('mainTitle');
-                let fontSize = 160; 
+                
+                let fontSize = 200; 
                 text.style.fontSize = fontSize + 'px';
+                
                 const availableWidth = box.clientWidth;
                 const availableHeight = box.clientHeight;
-                while ((text.scrollWidth > (availableWidth - 20) || text.scrollHeight > availableHeight) && fontSize > 40) {
-                    fontSize -= 2; text.style.fontSize = fontSize + 'px';
+                
+                while ((text.scrollWidth > availableWidth || text.scrollHeight > availableHeight) && fontSize > 20) {
+                    fontSize -= 5; 
+                    text.style.fontSize = fontSize + 'px';
+                }
+                while ((text.scrollWidth > availableWidth || text.scrollHeight > availableHeight) && fontSize > 10) {
+                    fontSize -= 1;
+                    text.style.fontSize = fontSize + 'px';
                 }
             },
 
-            // --- IMPRESIÓN A PDF VECTORIAL ---
             printPDF: function() {
-                alert('A continuación se abrirá el cuadro de impresión.\n\n1. En "Destino" selecciona "Guardar como PDF".\n2. En "Márgenes" elige "Ninguno".\n3. Activa "Gráficos de fondo".');
+                const f = this.formats[this.state.f];
+                alert(`Formato: ${f.name}\n\n1. Selecciona "Guardar como PDF".\n2. Márgenes: "Ninguno".\n3. Gráficos de fondo: ACTIVADO.`);
                 window.print();
             }
         };
